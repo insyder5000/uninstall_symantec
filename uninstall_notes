@@ -1,1 +1,50 @@
-
+ #Find and remove Symantec Endpoint Protection versions
+        $sym = gwmi Win32_Product -filter "name like 'Symantec Endpoint Protection%' AND vendor like 'Symantec%'"
+        if ($sym) 
+        {
+            if ($sym.count -gt 1) 
+            {
+                foreach ($version in $sym)
+                {
+                    Write-log -Message "FOUND:$($version.name):$($version.version)"
+                
+                Try 
+                {
+                    $return = $version.uninstall()
+                    if ($return.ReturnValue -eq 0) { Write-log -Message "REMOVED:$($version.name):$($version.version)" }
+                    else { Write-log -Message "FAILED to REMOVE with Exit Code: $($return.ReturnValue) :$($version.name):$($version.version)" }
+                
+                } 
+                Catch 
+                {
+                    Write-log -Message "REMOVE FAILED:$($version.name):$($version.version)"
+                }
+                }
+            }
+            else
+            {
+                Write-log -Message "FOUND:$($sym.name):$($sym.version)"
+                Try 
+                {
+                    $return = $sym.uninstall()
+                    if ($return.ReturnValue -eq 0) { Write-log -Message "REMOVED:$($sym.name):$($sym.version)" }
+                    else { Write-log -Message "FAILED to REMOVE with Exit Code: $($return.ReturnValue) :$($sym.name):$($sym.version)" }
+                } 
+                Catch 
+                {
+                    Write-log -Message "REMOVE FAILED:$($sym.name):$($sym.version)"
+                }
+            }
+        
+            
+        }#end if No Symantec Found
+        else
+        {
+            Write-log -Message "NO Symantec VERSIONS FOUND"
+        }
+        
+   if ((Read-Host "Please reboot the system to finish removing Symantec. Type YES to reboot immediatly OR Press Enter to exit without a reboot...") -eq "YES") 
+		{ 
+			Write-Log -Message "Rebooting in 30 seconds..."
+			shutdown.exe /r /t 30 /f
+		}
